@@ -59,7 +59,8 @@ app.post("/object", async (req, res) => {
 
   try {
     const insertRes = await db.collection("data").insertOne({ 
-      [dataKey]: req.body[dataKey],
+      'k': dataKey,
+      'v': req.body[dataKey],
       time: postVersion
     });
 
@@ -113,18 +114,19 @@ app.get("/object/:key", async (req, res) => {
     const queryRes = await db.collection("data").findOne(
       {
         "time": ver,
-        [req.params.key] : { $exists: true }
+        'k' : req.params.key
       },
       {
         projection: {
           "_id": false,
-          "time": false
+          "time": false,
+          'k': false,
         }
       }
     );
 
     res.status(200).json({
-      "value": queryRes[req.params.key]
+      "value": queryRes.v
     });
 
   } catch (err) {
