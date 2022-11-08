@@ -39,12 +39,30 @@ try {
   certificate = fs.readFileSync( '/etc/letsencrypt/live/srv1.nitrous.dev/fullchain.pem' );
 } catch (err) {}
 
-function getVersion(versions, time) {
-  let i = versions.length - 1;
-  while ((versions[i - 1]) && (versions[i] > time)) {
-    i--;
+function recursiveBinarySearch(versions, time, left, right) {
+  if (left > right) return null;
+
+  const idx = parseInt((right - left) / 2) + left;
+  if ((versions[idx] <= time) && 
+    ((!versions[idx + 1]) || (versions[idx + 1] > time))) return versions[idx];
+  else {
+    let res;
+    if (versions[idx] > time) res = recursiveBinarySearch(versions, time, left, idx - 1);
+    else res = recursiveBinarySearch(versions, time, idx + 1, right);
+    return res;
   }
-  return versions[i];
+}
+
+function getVersion(versions, time) {
+  const arrSize = versions.length;
+  if (versions[arrSize - 1] && (versions[arrSize - 1] <= time)) return versions[arrSize - 1];
+  if (versions[arrSize - 2] && (versions[arrSize - 2] <= time)) return versions[arrSize - 2];
+  if (versions[arrSize - 3] && (versions[arrSize - 3] <= time)) return versions[arrSize - 3];
+  if (versions[arrSize - 4] && (versions[arrSize - 4] <= time)) return versions[arrSize - 4];
+  if (versions[arrSize - 5] && (versions[arrSize - 5] <= time)) return versions[arrSize - 5];
+  if (versions[0] > time) return null;
+
+  return recursiveBinarySearch(versions, time, 0, arrSize - 6);
 }
 
 app.post("/object", async (req, res) => {
@@ -107,7 +125,7 @@ app.get("/object/:key", async (req, res) => {
       return;
     }
     const ver = getVersion(keyVersions.versions, callTime);
-    if (ver > callTime) {
+    if (ver == null) {
       res.status(400).json({ "errorCode": 5, "errorMsg": ERRORS[5] });
       return;
     }
