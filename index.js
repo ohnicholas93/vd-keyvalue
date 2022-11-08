@@ -77,9 +77,8 @@ app.post("/object", async (req, res) => {
 
   try {
     const insertRes = await db.collection("data").insertOne({ 
-      'k': dataKey,
-      'v': req.body[dataKey],
-      time: postVersion
+      '_id': `${dataKey}0${postVersion}`,
+      'v': req.body[dataKey]
     });
 
     if (insertRes.acknowledged === true) {
@@ -131,8 +130,7 @@ app.get("/object/:key", async (req, res) => {
     }
     const queryRes = await db.collection("data").findOne(
       {
-        "time": ver,
-        'k' : req.params.key
+        "_id": `${req.params.key}0${ver}`
       },
       {
         projection: {
